@@ -144,10 +144,10 @@ class Puzzle:
             self.moveXDown()
             
         else:
-            if self.canMoveLeft(Xindex):
-                self.moveXLeft()
-            else:
+            if self.canMoveRight(Xindex):
                 self.moveXRight()
+            else:
+                self.moveXLeft()
             self.moveTileUp(index)
 
     def moveTileDown(self, index):
@@ -157,7 +157,7 @@ class Puzzle:
         Xindex = self.puzzle.index(-1)
         
         if self.col(Xindex) > self.col(index):
-            direction = (self.col(index) - self.col(Xindex) + 1, self.row(index) + 1)
+            direction = (self.col(index) + 1, self.row(index) + 1)
             self.moveX(*direction)
             self.moveXLeft()
             self.moveXUp()
@@ -169,10 +169,10 @@ class Puzzle:
             self.moveXUp()
             
         else:
-            if self.canMoveLeft(Xindex):
-                self.moveXLeft()
-            else:
+            if self.canMoveRight(Xindex):
                 self.moveXRight()
+            else:
+                self.moveXLeft()
             self.moveTileDown(index)
 
     def moveTileLeft(self, index):
@@ -201,8 +201,8 @@ class Puzzle:
             self.moveTileLeft(index)
 
     def moveTileRight(self, index):
-        if not self.canMoveDown(index):
-            raise RuntimeError('index {} Tile cannot move Down'.format(index))
+        if not self.canMoveRight(index):
+            raise RuntimeError('index {} Tile cannot move Right'.format(index))
         
         Xindex = self.puzzle.index(-1)
         
@@ -247,9 +247,25 @@ class Puzzle:
                 self.moveTileUp(Nindex)
     
     def solve(self):
-        self.moveTile(1, 0, 0)
+        if not self.canSolve():
+            raise RuntimeError('puzzle is not solvable')
         
-
+        self.moveTile(1, 0, 0)
+        self.moveTile(2, 2, 0)
+        self.moveTile(3, 2, 1)
+        self.moveX(1, 0)
+        self.moveXRight()
+        self.moveXDown()
+        self.moveTile(4, 0, 2)
+        self.moveTile(7, 1, 2)
+        self.moveX(0, 1)
+        self.moveXDown()
+        self.moveXRight()
+        self.moveTile(5, 1, 2)
+        self.moveTile(8, 2, 2)
+        self.moveX(1, 1)
+        self.moveXDown()
+        self.moveXRight()
 
 puzzle: list[int] = []
 n: int = 3
@@ -258,6 +274,10 @@ for _ in range(n):
     puzzle.extend(map(int, input().split()))
 
 p = Puzzle(puzzle, n)
-p.moveTile(1, 0, 0)
-p.moveTile(2, 1, 0)
+p.solve()
 
+'''
+1 8 2
+-1 4 3
+7 6 5
+'''
