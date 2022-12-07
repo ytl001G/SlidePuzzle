@@ -2,6 +2,7 @@ class Puzzle:
     def __init__(self, puzzle: list[int], n: int):
         self.puzzle = puzzle
         self.n = n
+        self.fix: list[int] = []
     
     def __repr__(self):
         s: str = ''
@@ -13,11 +14,11 @@ class Puzzle:
             else:
                 s += ' ' * digits + 'X'
 
-            if i % 4 == 3:
+            if i % self.n == self.n - 1:
                 s += '\n'
         
         return s
-                
+    
     def canSolve(self) -> bool:
         inversion: int = 0
         
@@ -38,14 +39,15 @@ class Puzzle:
             else:
                 return bool(inversion % 2)
     
-    def printChanges(self, change: int):
+    def printChanges(self, change1: int, change2: int):
+        print('\n================================\n')
         digits = self.n**2 // 10 + 1
         
         for i, v in enumerate(self.puzzle):
             if v != -1:
                 print(' ' * (digits - v // 10), end='')
                 
-                if i == change:
+                if i == change1 or i == change2:
                     print('\033[91m{}\033[0m'.format(str(v)), end='')
                 else:
                     print(v, end='')
@@ -53,15 +55,209 @@ class Puzzle:
             else:
                 print(' ' * digits + '\033[91mX\033[0m', end='')
                 
-            if i % 4 == 3:
+            if i % self.n == self.n - 1:
                 print()
+        
+    def col(self, index: int):
+        return index % self.n
+    
+    def row(self, index: int):
+        return index // self.n
+
+    def canMoveUp(self, index: int):
+        return index // self.n > 0
+    
+    def canMoveDown(self, index: int):
+        return index // self.n < n-1
+    
+    def canMoveLeft(self, index: int):
+        return index % self.n > 0
+    
+    def canMoveRight(self, index: int):
+        return index % self.n < n-1
+        
+    def switch(self, index1: int, index2: int):
+        self.puzzle[index1], self.puzzle[index2] = self.puzzle[index2], self.puzzle[index1]
+        self.printChanges(index1, index2)
+
+    def moveXUp(self):
+        Xindex = self.puzzle.index(-1)
+        if not self.canMoveUp(Xindex):
+            raise RuntimeError('index {} X cannot move Up'.format(Xindex))
+        
+        self.switch(Xindex, Xindex - n)
+    
+    def moveXDown(self):
+        Xindex = self.puzzle.index(-1)
+        if not self.canMoveDown(Xindex):
+            raise RuntimeError('index {} X cannot move Down'.format(Xindex))
+        
+        self.switch(Xindex, Xindex + n)
+        
+    def moveXLeft(self):
+        Xindex = self.puzzle.index(-1)
+        if not self.canMoveLeft(Xindex):
+            raise RuntimeError('index {} X cannot move Left'.format(Xindex))
+        
+        self.switch(Xindex, Xindex - 1)
+    
+    def moveXRight(self):
+        Xindex = self.puzzle.index(-1)
+        if not self.canMoveRight(Xindex):
+            raise RuntimeError('index {} X cannot move Right'.format(Xindex))
+        
+        self.switch(Xindex, Xindex + 1)
+    
+    def moveX(self, x: int, y: int):
+        Xindex = self.puzzle.index(-1)
+        dx = x - self.col(Xindex)
+        dy = y - self.row(Xindex)
+        
+        for _ in range(abs(dx)):
+            if dx > 0:
+                self.moveXRight()
+            else:
+                self.moveXLeft()
+        
+        for _ in range(abs(dy)):
+            if dy > 0:
+                self.moveXDown()
+            else:
+                self.moveXUp()
+    
+    def moveTileUp(self, index):
+        if not self.canMoveUp(index):
+            raise RuntimeError('index {} Tile cannot move Up'.format(index))
+        
+        Xindex = self.puzzle.index(-1)
+        
+        if self.col(Xindex) > self.col(index):
+            direction = (self.col(index) + 1, self.row(index) - 1)
+            self.moveX(*direction)
+            self.moveXLeft()
+            self.moveXDown()
+            
+        elif self.col(Xindex) < self.col(index):
+            direction = (self.col(index) - 1, self.row(index) - 1)
+            self.moveX(*direction)
+            self.moveXRight()
+            self.moveXDown()
+            
+        else:
+            if self.canMoveLeft(Xindex):
+                self.moveXLeft()
+            else:
+                self.moveXRight()
+            self.moveTileUp(index)
+
+    def moveTileDown(self, index):
+        if not self.canMoveDown(index):
+            raise RuntimeError('index {} Tile cannot move Down'.format(index))
+        
+        Xindex = self.puzzle.index(-1)
+        
+        if self.col(Xindex) > self.col(index):
+            direction = (self.col(index) - self.col(Xindex) + 1, self.row(index) + 1)
+            self.moveX(*direction)
+            self.moveXLeft()
+            self.moveXUp()
+            
+        elif self.col(Xindex) < self.col(index):
+            direction = (self.col(index) - 1, self.row(index) + 1)
+            self.moveX(*direction)
+            self.moveXRight()
+            self.moveXUp()
+            
+        else:
+            if self.canMoveLeft(Xindex):
+                self.moveXLeft()
+            else:
+                self.moveXRight()
+            self.moveTileDown(index)
+
+    def moveTileLeft(self, index):
+        if not self.canMoveLeft(index):
+            raise RuntimeError('index {} Tile cannot move Left'.format(index))
+        
+        Xindex = self.puzzle.index(-1)
+        
+        if self.row(Xindex) > self.row(index):
+            direction = (self.col(index) - 1, self.row(index) + 1)
+            self.moveX(*direction)
+            self.moveXUp()
+            self.moveXRight()
+            
+        elif self.row(Xindex) < self.row(index):
+            direction = (self.col(index) - 1, self.row(index) - 1)
+            self.moveX(*direction)
+            self.moveXDown()
+            self.moveXRight()
+            
+        else:
+            if self.canMoveUp(Xindex):
+                self.moveXUp()
+            else:
+                self.moveXDown()
+            self.moveTileLeft(index)
+
+    def moveTileRight(self, index):
+        if not self.canMoveDown(index):
+            raise RuntimeError('index {} Tile cannot move Down'.format(index))
+        
+        Xindex = self.puzzle.index(-1)
+        
+        if self.row(Xindex) > self.row(index):
+            direction = (self.col(index) + 1, self.row(index) + 1)
+            self.moveX(*direction)
+            self.moveXUp()
+            self.moveXLeft()
+            
+        elif self.row(Xindex) < self.row(index):
+            direction = (self.col(index) + 1, self.row(index) - 1)
+            self.moveX(*direction)
+            self.moveXDown()
+            self.moveXLeft()
+            
+        else:
+            if self.canMoveUp(Xindex):
+                self.moveXUp()
+            else:
+                self.moveXDown()
+            self.moveTileRight(index)
+    
+    def moveTile(self, N: int, x: int, y: int):
+        Nindex = self.puzzle.index(N)
+        dx = x - self.col(Nindex)
+        dy = y - self.row(Nindex)
+        
+        for _ in range(abs(dx)):
+            Nindex = self.puzzle.index(N)
+            
+            if dx > 0:
+                self.moveTileRight(Nindex)
+            else:
+                self.moveTileLeft(Nindex)
+        
+        for _ in range(abs(dy)):
+            Nindex = self.puzzle.index(N)
+        
+            if dy > 0:
+                self.moveTileDown(Nindex)
+            else:
+                self.moveTileUp(Nindex)
+    
+    def solve(self):
+        self.moveTile(1, 0, 0)
+        
+
 
 puzzle: list[int] = []
-n: int = 4
+n: int = 3
 
 for _ in range(n):
     puzzle.extend(map(int, input().split()))
 
 p = Puzzle(puzzle, n)
-print(p)
-p.printChanges(1)
+p.moveTile(1, 0, 0)
+p.moveTile(2, 1, 0)
+
